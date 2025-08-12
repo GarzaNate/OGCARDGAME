@@ -64,4 +64,30 @@ public class GameManager {
 
     // PLAY LOGIC
     // ----------
+    public boolean playCard(String playerId, Card card) {
+        if (!gameStarted || gameOver) return false;
+
+        Player player = getPlayerById(playerId);
+        if (player == null ) return false;
+        
+
+        return true;
+    }
+
+
+    // HELPERS
+    private Player getPlayerById(String playerId) {
+        return players.stream()
+                .filter(player -> player.getId().equals(playerId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Player not found: " + playerId));
+    }
+
+    public boolean isGameOver() {
+        return gameOver;
+    }
+
+    public Player getWinner() {
+        return winner;
+    }
 }

@@ -9,8 +9,8 @@ public class Player {
 
     // COLLECTIONS
     private final List<Card> hand = new ArrayList<>();
-    private final List<Card> faceDownCards = new ArrayList<>();
-    private final List<Card> faceUpCards = new ArrayList<>();
+    private final List<Card> faceDown = new ArrayList<>();
+    private final List<Card> faceUp = new ArrayList<>();
 
     public Player(String id, String name) {
         this.id = id;
@@ -19,13 +19,13 @@ public class Player {
 
     // ADDERS
     public void addToFaceDown(Card card) {
-        if (faceDownCards.size() < 3) {
-            faceDownCards.add(card);
+        if (faceDown.size() < 3) {
+            faceDown.add(card);
         }    
     }
 
     public void addToFaceUp(Card card) {
-        faceUpCards.add(card);
+        faceUp.add(card);
     }
 
     public void addToHand(Card card) {
@@ -37,12 +37,12 @@ public class Player {
         return Collections.unmodifiableList(hand);
     }
 
-    public List<Card> getFaceDownCards() {
-        return  Collections.unmodifiableList(faceDownCards);
+    public List<Card> getFaceDown() {
+        return  Collections.unmodifiableList(faceDown);
     }
 
-    public List<Card> getFaceUpCards() {
-        return Collections.unmodifiableList(faceUpCards);
+    public List<Card> getFaceUp() {
+        return Collections.unmodifiableList(faceUp);
     }
 
     public String getId() {
@@ -54,12 +54,12 @@ public class Player {
     }
 
     // GAME LOGIC HELPERS
-    public boolean hasFaceDownCards() {
-        return !faceDownCards.isEmpty();
+    public boolean hasFaceDown() {
+        return !faceDown.isEmpty();
     }
 
-    public boolean hasFaceUpCards() {
-        return !faceUpCards.isEmpty();
+    public boolean hasFaceUp() {
+        return !faceUp.isEmpty();
     }
 
     public boolean hasCardsInHand() {
@@ -67,6 +67,6 @@ public class Player {
     }
 
     public boolean outOfCards() {
-        return !hasFaceDownCards() && !hasFaceUpCards() && !hasCardsInHand();
+        return !hasFaceDown() && !hasFaceUp() && !hasCardsInHand();
     }
 }
