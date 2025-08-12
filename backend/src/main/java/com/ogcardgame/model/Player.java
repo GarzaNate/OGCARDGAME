@@ -69,4 +69,17 @@ public class Player {
     public boolean outOfCards() {
         return !hasFaceDown() && !hasFaceUp() && !hasCardsInHand();
     }
+
+    // REMOVERS
+    public void removeFromHand(List<Card> cards) {
+        hand.removeAll(cards);
+    }
+
+    public void removeFromFaceDown(List<Card> cards) {
+        faceDown.removeAll(cards);
+    }
+
+    public void removeFromFaceUp(Card card) {
+        faceUp.remove(card);
+    }
 }

@@ -9,9 +9,10 @@ public class GameManager {
     private final List<Player> players = new ArrayList<>();
     private Deck deck;
     private final Pile pile = new Pile();
-
+    
     private int currPlayerIndex = 0;
-    private boolean gameStarted = false;
+    private GamePhase phase = GamePhase.DEAL;
+
     private boolean gameOver = false;
     private Player winner = null;
 
@@ -22,8 +23,8 @@ public class GameManager {
     // PLAYER MANAGEMENT
     // -----------------
     public void addPlayer(Player player) {
-        if (gameStarted || gameOver) {
-            throw new IllegalStateException("Cannot add player after game has started or ended.");
+        if (phase != GamePhase.DEAL) {
+            throw new IllegalStateException("Cannot add players after the game has started.");
         }
         if (players.size() >= 4) {
             throw new IllegalStateException("Cannot add more than 4 players.");
@@ -31,7 +32,7 @@ public class GameManager {
         players.add(player);
     }
 
-    // GAME LIFECYCLE
+    // GAME START
     // --------------
     public void startGame() {
         if (players.size() < 2 || players.size() > 4) {
@@ -43,14 +44,18 @@ public class GameManager {
 
         // DEAL INITIAL CARDS TO PLAYERS
         for (Player player : players) {
-            for (int i = 0; i > 3; i++) {
+            for (int i = 0; i < 3; i++) {
                 player.addToFaceDown(deck.drawCard());
             }
             for (int i = 0; i < 7; i++) {
                 player.addToHand(deck.drawCard());
             }
         }
-        gameStarted = true;
+        phase = GamePhase.SELECT_FACE_UP;
+    }
+
+    public GamePhase getPhase() {
+        return phase;
     }
 
     public Player getCurrentPlayer() {
@@ -59,20 +64,25 @@ public class GameManager {
 
     public void nextTurn() {
         currPlayerIndex = (currPlayerIndex + 1) % players.size();
+
+        while(players.get(currPlayerIndex).outOfCards()) {
+            currPlayerIndex = (currPlayerIndex + 1) % players.size();
+        }
     }
 
-    // PLAY LOGIC
-    // ----------
-    public boolean playCard(String playerId, Card card) {
-        if (!gameStarted || gameOver) return false;
+    // PHASE 1: FACE UP SELECTION
+    // --------------------------------
+    public boolean selectFaceUpCards(String playerId, List<Card> selectedCards) {
+        if (phase != GamePhase.SELECT_FACE_UP) return false;
 
         Player player = getPlayerById(playerId);
-        if (player == null ) return false;
+        if (!player.getHand().containsAll(selectedCards)) return false;
+        if (selectedCards.size() != 3) return false;
 
+        
 
         return true;
     }
-
 
     // HELPERS
     private Player getPlayerById(String playerId) {
