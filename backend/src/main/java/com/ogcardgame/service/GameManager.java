@@ -8,8 +8,7 @@ public class GameManager {
     private final String gameId;
     private final List<Player> players = new ArrayList<>();
     private Deck deck;
-    private final List<Card> pile = new ArrayList<>();
-    private final List<Card> discardPile = new ArrayList<>();
+    private final Pile pile = new Pile();
 
     private int currPlayerIndex = 0;
     private boolean gameStarted = false;
@@ -69,7 +68,7 @@ public class GameManager {
 
         Player player = getPlayerById(playerId);
         if (player == null ) return false;
-        
+
 
         return true;
     }
