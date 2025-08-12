@@ -33,16 +33,16 @@ public class Player {
     }
 
     // GETTERS
-    public List<Card> gethand() {
-        return hand;
+    public List<Card> getHand() {
+        return Collections.unmodifiableList(hand);
     }
 
     public List<Card> getFaceDownCards() {
-        return faceDownCards;
+        return  Collections.unmodifiableList(faceDownCards);
     }
 
     public List<Card> getFaceUpCards() {
-        return faceUpCards;
+        return Collections.unmodifiableList(faceUpCards);
     }
 
     public String getId() {

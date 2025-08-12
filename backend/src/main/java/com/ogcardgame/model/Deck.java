@@ -5,6 +5,10 @@ import java.util.*;
 public class Deck {
     private final List<Card> cards;
 
+    public Deck(List<Card> cards) {
+        this.cards = new ArrayList<>(cards);
+    }
+
     public Deck() {
         cards = new ArrayList<>();
         for (Suit suit : Suit.values()) {
@@ -20,10 +24,7 @@ public class Deck {
     }
 
     public Card drawCard() {
-        if (!cards.isEmpty()) {
-            return cards.remove(0);
-        }
-        return null;
+        return !cards.isEmpty() ? cards.remove(cards.size() - 1) : null;
     }
 
     public boolean isEmpty() {
