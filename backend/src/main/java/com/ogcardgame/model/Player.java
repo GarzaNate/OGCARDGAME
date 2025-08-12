@@ -3,9 +3,11 @@ package com.ogcardgame.model;
 import java.util.*;
 
 public class Player {
+    // ATTRIBUTES
     private final String id;
     private final String name;
 
+    // COLLECTIONS
     private final List<Card> hand = new ArrayList<>();
     private final List<Card> faceDownCards = new ArrayList<>();
     private final List<Card> faceUpCards = new ArrayList<>();
@@ -15,7 +17,7 @@ public class Player {
         this.name = name;
     }
 
-    // Players should only have 3 FaceDown cards 
+    // ADDERS
     public void addToFaceDown(Card card) {
         if (faceDownCards.size() < 3) {
             faceDownCards.add(card);
@@ -30,4 +32,41 @@ public class Player {
         hand.add(card);
     }
 
+    // GETTERS
+    public List<Card> gethand() {
+        return hand;
+    }
+
+    public List<Card> getFaceDownCards() {
+        return faceDownCards;
+    }
+
+    public List<Card> getFaceUpCards() {
+        return faceUpCards;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    // GAME LOGIC HELPERS
+    public boolean hasFaceDownCards() {
+        return !faceDownCards.isEmpty();
+    }
+
+    public boolean hasFaceUpCards() {
+        return !faceUpCards.isEmpty();
+    }
+
+    public boolean hasCardsInHand() {
+        return !hand.isEmpty();
+    }
+
+    public boolean outOfCards() {
+        return !hasFaceDownCards() && !hasFaceUpCards() && !hasCardsInHand();
+    }
 }
