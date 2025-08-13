@@ -118,8 +118,8 @@ public class GameManager {
 
         removeCardsFromPlayer(player, cards);
         pile.addCards(cards);
-        if (isBomb(pile)) pile.clearPile();
 
+        boolean repeatTurn = handleSpecialRanks(cards);
         drawUpToFour(player);
 
         if (player.getHand().isEmpty() && deck.isEmpty()) {
@@ -127,7 +127,7 @@ public class GameManager {
         }
 
         checkGameOver();
-        nextTurn();
+        if (!repeatTurn) nextTurn();
         return true;
     }
 
@@ -140,29 +140,30 @@ public class GameManager {
 
         removeCardsFromPlayer(player, cards);
         pile.addCards(cards);
-        if (isBomb(pile)) pile.clearPile();
+        boolean repeatTurn = handleSpecialRanks(cards);
 
         if (player.getFaceUp().isEmpty()) {
             phase = GamePhase.PLAY_FROM_FACE_DOWN;
         }
 
         checkGameOver();
-        nextTurn();
+        if (!repeatTurn) nextTurn();
         return true;
     }
 
     private boolean playFromFaceDown(Player player, Card card) {
         // Blind play - must play card, then check if valid
-
         player.removeFromFaceDown(card);
         pile.addCards(List.of(card));
 
         if (!isValidPlay(List.of(card))) {
             player.addToHand(pile.clearPile());
-            drawUpToFour(player);
         }
+
+        boolean repeatTurn = handleSpecialRanks(List.of(card));
+
         checkGameOver();
-        nextTurn();
+        if (!repeatTurn) nextTurn();
         return true;
     }
 
@@ -245,6 +246,24 @@ public class GameManager {
                 .filter(player -> player.getId().equals(playerId))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Player not found: " + playerId));
+    }
+
+    private boolean handleSpecialRanks(List<Card> cards) {
+        Rank playedRank = cards.get(0).getRank();
+        if (playedRank == Rank.TEN) {
+            // Ten clears the pile
+            pile.clearPile();
+            return true;
+        } else if (playedRank == Rank.TWO) {
+            // Two resets top value of pile
+            return true;
+        }
+
+        if (isBomb(pile)) {
+            pile.clearPile();
+            return false; // Bomb clears pile, no repeat turn
+        }
+        return false;
     }
 
     public GamePhase getPhase() {
