@@ -226,12 +226,21 @@ public class GameManager {
                     .filter(player -> !player.outOfCards())
                     .findFirst()
                     .orElse(null);
+            phase = GamePhase.END;
         }
-        phase = GamePhase.END;
     }
 
     private void removeCardsFromPlayer(Player player, List<Card> cards) {
-        player.removeFromHand(cards);
+        switch (phase) {
+            case PLAY_FROM_HAND:
+                player.removeFromHand(cards);
+                break;
+            case PLAY_FROM_FACE_UP:
+                player.removeFromFaceUp(cards);
+                break;
+            default:
+                throw new IllegalStateException("Cannot remove cards in current phase: " + phase);
+        }
     }
 
     private Player getPlayerById(String playerId) {
