@@ -1,6 +1,7 @@
 package com.ogcardgame.service;
 
 import com.ogcardgame.model.*;
+import com.ogcardgame.dto.*;
 import java.util.*;
 
 public class GameManager {
@@ -127,7 +128,8 @@ public class GameManager {
         }
 
         checkGameOver();
-        if (!repeatTurn) nextTurn();
+        if (!repeatTurn)
+            nextTurn();
         return true;
     }
 
@@ -147,7 +149,8 @@ public class GameManager {
         }
 
         checkGameOver();
-        if (!repeatTurn) nextTurn();
+        if (!repeatTurn)
+            nextTurn();
         return true;
     }
 
@@ -163,8 +166,49 @@ public class GameManager {
         boolean repeatTurn = handleSpecialRanks(List.of(card));
 
         checkGameOver();
-        if (!repeatTurn) nextTurn();
+        if (!repeatTurn)
+            nextTurn();
         return true;
+    }
+
+    // GAME STATE
+    // ----------------
+    public GameStateDTO toGameStateDTO() {
+        GameStateDTO dto = new GameStateDTO();
+        dto.setGameID(this.gameId);
+        dto.setPhase(this.phase);
+        dto.setCurrentPlayerId(players.get(currPlayerIndex).getId());
+        dto.setPile(pile.getCards());
+        dto.setGameOver(gameOver);
+        dto.setWinnerId(winner != null ? winner.getId() : null);
+
+        List<PlayerDTO> playerDTOs = new ArrayList<>();
+        for (Player player : players) {
+            PlayerDTO playerDTO = new PlayerDTO();
+            playerDTO.setPlayerId(player.getId());
+            playerDTO.setName(player.getName());
+            playerDTO.setFaceUp(player.getFaceUp());
+            playerDTO.setFaceDownCount(player.getFaceDown().size());
+            playerDTO.setCurrentTurn(player.getId().equals(dto.getCurrentPlayerId()));
+
+            if (player.getId().equals(requestingPlayerId)) {
+                playerDTO.setHand(new ArrayList<>(player.getHand()));
+            } else {
+                playerDTO.setHandSize(player.getHand().size()); // Hide hand for other players
+            }
+
+            playerDTO.setFaceUp(new ArrayList<>(player.getFaceUp()));
+
+            if (player.getId().equals(requestingPlayerId)) {
+                playerDTO.setFaceDownCount((player.getFaceDown().size()));
+            } else {
+                playerDTO.setFaceDownCount(player.getFaceDown().size()); // Hide face down cards for others
+            }
+
+            playerDTOs.add(playerDTO);
+        }
+        dto.setPlayers(playerDTOs);
+        return dto;
     }
 
     // HELPERS
