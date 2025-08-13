@@ -134,7 +134,6 @@ public class GameManager {
     private boolean playFromFaceUp(Player player, List<Card> cards) {
         if (!isValidPlay(cards)) {
             player.addToHand(pile.clearPile());
-            drawUpToFour(player);
             nextTurn();
             return false;
         }
@@ -143,9 +142,7 @@ public class GameManager {
         pile.addCards(cards);
         if (isBomb(pile)) pile.clearPile();
 
-        drawUpToFour(player);
-
-        if (player.getFaceUp().isEmpty() && deck.isEmpty()) {
+        if (player.getFaceUp().isEmpty()) {
             phase = GamePhase.PLAY_FROM_FACE_DOWN;
         }
 
