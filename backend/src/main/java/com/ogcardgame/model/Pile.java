@@ -15,6 +15,10 @@ public class Pile {
         }
         cards.addAll(newCards);
     }
+    
+    public boolean isEmpty() {
+        return cards.isEmpty();
+    }
 
     public List<Card> clearPile() {
         List<Card> pileCopy = new ArrayList<>(cards);

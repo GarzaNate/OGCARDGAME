@@ -17,19 +17,65 @@ public class Player {
         this.name = name;
     }
 
-    // ADDERS
+    // HAND
+    public void addToHand(Card card) {
+        hand.add(card);
+    }
+
+    public void addToHand(Collection<Card> cards) {
+        if (cards != null && !cards.isEmpty()) {
+            hand.addAll(cards);
+        }
+    }
+
+    public void removeFromHand(Card card) {
+        hand.remove(card);
+    }
+
+     public void removeFromHand(Collection<Card> cards) {
+        hand.removeAll(cards);
+    }
+
+    // FACE UP
+    public void addToFaceUp(Card card) {
+        faceUp.add(card);
+    }
+    
+    public void addToFaceUp(Collection<Card> cards) {
+        if (cards != null && !cards.isEmpty()) {
+            faceUp.addAll(cards);
+        }
+    }
+
+    public void removeFromFaceUp(Card card) {
+        faceUp.remove(card);
+    }
+
+    public void removeFromFaceUp(Collection<Card> cards) {
+        faceUp.removeAll(cards);
+    }
+
+    // FACE DOWN
     public void addToFaceDown(Card card) {
         if (faceDown.size() < 3) {
             faceDown.add(card);
         }    
     }
 
-    public void addToFaceUp(Card card) {
-        faceUp.add(card);
+    public void addToFaceDown(Collection<Card> cards) {
+        if (cards != null && !cards.isEmpty()) {
+            for (Card card : cards) {
+                addToFaceDown(card);
+            }
+        }
     }
 
-    public void addToHand(Card card) {
-        hand.add(card);
+    public void removeFromFaceDown(Card card) {
+        faceDown.remove(card);
+    }
+
+    public void removeFromFaceDown(List<Card> cards) {
+        faceDown.removeAll(cards);
     }
 
     // GETTERS
@@ -70,16 +116,7 @@ public class Player {
         return !hasFaceDown() && !hasFaceUp() && !hasCardsInHand();
     }
 
-    // REMOVERS
-    public void removeFromHand(List<Card> cards) {
-        hand.removeAll(cards);
-    }
-
-    public void removeFromFaceDown(List<Card> cards) {
-        faceDown.removeAll(cards);
-    }
-
-    public void removeFromFaceUp(Card card) {
-        faceUp.remove(card);
+    public void addCardsToHand(Collection<Card> cards) {
+        addToHand(cards);
     }
 }
