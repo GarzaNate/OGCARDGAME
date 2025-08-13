@@ -74,10 +74,6 @@ public class Player {
         faceDown.remove(card);
     }
 
-    public void removeFromFaceDown(List<Card> cards) {
-        faceDown.removeAll(cards);
-    }
-
     // GETTERS
     public List<Card> getHand() {
         return Collections.unmodifiableList(hand);
