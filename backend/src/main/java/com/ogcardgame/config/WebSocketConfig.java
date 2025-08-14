@@ -1,16 +1,22 @@
 package com.ogcardgame.config;
 
+import com.ogcardgame.controller.GameWebSocketHandler;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.config.annotation.*;
 
 @Configuration
 @EnableWebSocket
-
 public class WebSocketConfig implements WebSocketConfigurer {
+
+    private final GameWebSocketHandler gameWebSocketHandler;
+
+    public WebSocketConfig(GameWebSocketHandler gameWebSocketHandler) {
+        this.gameWebSocketHandler = gameWebSocketHandler;
+    }
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(new com.ogcardgame.controller.GameWebSocketHandler(), "/ws/game")
-                .setAllowedOrigins("*"); // Allow all origins for simplicity, adjust as needed
+        registry.addHandler(gameWebSocketHandler, "/ws/game")
+                .setAllowedOrigins("*");
     }
 }
