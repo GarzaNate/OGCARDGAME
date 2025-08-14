@@ -1,8 +1,8 @@
 package com.ogcardgame.service;
 
+import java.util.*;
 import com.ogcardgame.model.*;
 import com.ogcardgame.dto.*;
-import java.util.*;
 
 public class GameManager {
 
