@@ -13,6 +13,17 @@ public class PlayerDTO {
     private int faceDownCount;
     private boolean isCurrentTurn;
 
+    public PlayerDTO(Player player, boolean isSelf) {
+        this.playerId = player.getPlayerId();
+        this.handSize = player.getHand().size();
+
+        if (isSelf) {
+            this.hand = player.getHand();
+        } else {
+            this.hand = null; // Hide hand details for other players
+        }
+    }
+
     // GETTERS
     public String getPlayerId() {
         return playerId;

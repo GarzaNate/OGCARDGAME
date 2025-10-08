@@ -17,8 +17,8 @@ public class Card {
         return rank;
     }
 
-    public int getValue() {
-        return rank.getValue();
+    public String getId() {
+        return rank.toString() + "-" + suit.toString();
     }
     
     @Override

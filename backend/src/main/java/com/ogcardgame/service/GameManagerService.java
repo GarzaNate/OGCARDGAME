@@ -1,12 +1,14 @@
 package com.ogcardgame.service;
 
 import org.springframework.stereotype.Service;
+import java.util.Map;
+import java.util.HashMap;
 
 @Service
 public class GameManagerService {
-    private final GameManager gameManager = new GameManager("defaultGame");
+    private final Map<String, GameManager> games = new HashMap<>();
 
-    public GameManager getGameManager() {
-        return gameManager;
+    public GameManager getGame(String gameId) {
+        return games.computeIfAbsent(gameId, id -> new GameManager(id));
     }
 }

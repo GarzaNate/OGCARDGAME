@@ -173,7 +173,7 @@ public class GameManager {
 
     // GAME STATE
     // ----------------
-    public GameStateDTO toGameStateDTO() {
+    public GameStateDTO toGameStateDTO(String requestingPlayerId) {
         GameStateDTO dto = new GameStateDTO();
         dto.setGameID(this.gameId);
         dto.setPhase(this.phase);

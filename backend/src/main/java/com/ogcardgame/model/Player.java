@@ -87,7 +87,7 @@ public class Player {
         return Collections.unmodifiableList(faceUp);
     }
 
-    public String getId() {
+    public String getPlayerId() {
         return id;
     }
 
