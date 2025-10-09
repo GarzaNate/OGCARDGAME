@@ -19,7 +19,7 @@ public class GameManagerService {
 
     public void addPlayer(String gameId, String playerId, String name) {
         GameManager game = getOrCreateGame(gameId);
-        game.addPlayer(playerId);
+        game.addPlayer(playerId, name);
     }
 
     public void startGame(String gameId, String playerId) {

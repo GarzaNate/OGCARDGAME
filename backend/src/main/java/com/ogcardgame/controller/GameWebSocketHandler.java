@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ogcardgame.dto.GameStateDTO;
 import com.ogcardgame.service.GameManagerService;
-import com.ogcardgame.service.GameManager;
 import org.springframework.web.socket.*;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 

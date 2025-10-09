@@ -18,9 +18,9 @@ public class GameManager {
         this.id = id;
     }
 
-    public void addPlayer(String playerId) {
+    public void addPlayer(String playerId, String name) {
         if (phase != GamePhase.DEAL) throw new IllegalStateException("Cannot join after deal.");
-        players.add(new Player(playerId, "Player " + (players.size() + 1)));
+        players.add(new Player(playerId, "Player " + name + (players.size() + 1)));
     }
 
     public void startGame() {
@@ -57,6 +57,9 @@ public class GameManager {
     }
 
     public boolean playCard(String playerId, Card card) {
+        if (phase != GamePhase.PLAY_FROM_HAND && phase != GamePhase.PLAY_FROM_FACE_UP && phase != GamePhase.PLAY_FROM_FACE_DOWN)
+            return false;
+
         Player player = getPlayer(playerId);
 
         // Only current player can act

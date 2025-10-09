@@ -12,7 +12,8 @@ public class GameStateDTO {
     private boolean gameOver;
     private String winnerId;
 
-    public GameStateDTO(String gameID, List<PlayerDTO> players, List<Card> pile, String currentPlayerId, GamePhase phase) {
+    public GameStateDTO(String gameID, List<PlayerDTO> players, List<Card> pile, String currentPlayerId,
+            GamePhase phase) {
         this.gameID = gameID;
         this.players = players;
         this.pile = pile;
@@ -20,6 +21,14 @@ public class GameStateDTO {
         this.phase = phase;
         this.gameOver = false;
         this.winnerId = null;
+    }
+
+    public GameStateDTO(String gameID, List<PlayerDTO> players, List<Card> pile,
+            String currentPlayerId, GamePhase phase,
+            boolean gameOver, String winnerId) {
+        this(gameID, players, pile, currentPlayerId, phase);
+        this.gameOver = gameOver;
+        this.winnerId = winnerId;
     }
 
     // GETTERS
@@ -52,16 +61,16 @@ public class GameStateDTO {
     }
 
     // SETTERS
+    public void setCurrentPlayerId(String currentPlayerId) {
+        this.currentPlayerId = currentPlayerId;
+    }
+
     public void setGameID(String gameID) {
         this.gameID = gameID;
     }
 
     public void setPhase(GamePhase phase) {
         this.phase = phase;
-    }
-
-    public void setCurrentPlayerId(String currentPlayerId) {
-        this.currentPlayerId = currentPlayerId;
     }
 
     public void setPlayers(List<PlayerDTO> players) {
@@ -78,6 +87,5 @@ public class GameStateDTO {
 
     public void setWinnerId(String winnerId) {
         this.winnerId = winnerId;
-
     }
 }

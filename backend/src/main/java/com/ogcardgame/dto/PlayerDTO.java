@@ -15,13 +15,12 @@ public class PlayerDTO {
 
     public PlayerDTO(Player player, boolean isSelf) {
         this.playerId = player.getPlayerId();
+        this.name = player.getName();
         this.handSize = player.getHand().size();
-
-        if (isSelf) {
-            this.hand = player.getHand();
-        } else {
-            this.hand = null; // Hide hand details for other players
-        }
+        this.faceUp = player.getFaceUp();
+        this.faceDownCount = player.getFaceDown().size();
+        this.isCurrentTurn = false; // This should be set based on game state
+        this.hand = isSelf ? player.getHand() : null;
     }
 
     // GETTERS
