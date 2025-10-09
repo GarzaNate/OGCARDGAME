@@ -12,16 +12,24 @@ public class GameStateDTO {
     private boolean gameOver;
     private String winnerId;
 
-    public GameStateDTO(String gameID, List<PlayerDTO> players, List<Card> pile, String currentPlayerId,
-            GamePhase phase) {
-        this.gameID = gameID;
-        this.players = players;
-        this.pile = pile;
-        this.currentPlayerId = currentPlayerId;
-        this.phase = phase;
-        this.gameOver = false;
-        this.winnerId = null;
+    public GameStateDTO(String gameID, List<PlayerDTO> players, List<Card> pile, String currentPlayerId, GamePhase phase) {
+    this.gameID = gameID;
+    this.players = players;
+    this.pile = pile;
+    this.currentPlayerId = currentPlayerId;
+    this.phase = phase;
+
+    // Default values
+    this.gameOver = false;
+    this.winnerId = null;
+
+    // ✅ Automatically mark game as over when phase is END
+    if (phase == GamePhase.END) {
+        this.gameOver = true;
+        this.winnerId = currentPlayerId; 
+        // (You can later replace currentPlayerId with a proper winner ID from GameManager)
     }
+}
 
     public GameStateDTO(String gameID, List<PlayerDTO> players, List<Card> pile,
             String currentPlayerId, GamePhase phase,
