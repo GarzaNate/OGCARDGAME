@@ -8,8 +8,8 @@ public class Player {
     private final String name;
 
     // COLLECTIONS
-    private final List<Card> hand = new ArrayList<>();
     private final List<Card> faceDown = new ArrayList<>();
+    private final List<Card> hand = new ArrayList<>();
     private final List<Card> faceUp = new ArrayList<>();
 
     public Player(String id, String name) {
@@ -76,15 +76,15 @@ public class Player {
 
     // GETTERS
     public List<Card> getHand() {
-        return Collections.unmodifiableList(hand);
+        return hand;
     }
 
     public List<Card> getFaceDown() {
-        return  Collections.unmodifiableList(faceDown);
+        return faceDown;
     }
 
     public List<Card> getFaceUp() {
-        return Collections.unmodifiableList(faceUp);
+        return faceUp;
     }
 
     public String getPlayerId() {
@@ -110,10 +110,6 @@ public class Player {
 
     public boolean outOfCards() {
         return !hasFaceDown() && !hasFaceUp() && !hasCardsInHand();
-    }
-
-    public void addCardsToHand(Collection<Card> cards) {
-        addToHand(cards);
     }
 
     public Card findCardById(String cardId) {

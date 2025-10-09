@@ -4,12 +4,14 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ogcardgame.dto.GameStateDTO;
 import com.ogcardgame.service.GameManagerService;
+import org.springframework.stereotype.Component;
 import org.springframework.web.socket.*;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
 import java.util.*;
 
+@Component
 public class GameWebSocketHandler extends TextWebSocketHandler {
 
     private final GameManagerService gameManagerService;

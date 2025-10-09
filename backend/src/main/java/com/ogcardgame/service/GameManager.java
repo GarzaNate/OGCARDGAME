@@ -34,7 +34,7 @@ public class GameManager {
         for (Player player : players) {
             for (int i = 0; i < 3; i++)
                 player.getFaceDown().add(deck.draw());
-            for (int i = 0; i < 6; i++)
+            for (int i = 0; i < 7; i++)
                 player.getHand().add(deck.draw());
         }
         phase = GamePhase.SELECT_FACE_UP;
@@ -71,7 +71,7 @@ public class GameManager {
 
         Player player = getPlayer(playerId);
 
-        // Only current player can act
+        // change this to allow for slaps
         if (!getCurrentPlayer().equals(player))
             return false;
 
@@ -83,18 +83,28 @@ public class GameManager {
         }
 
         // Check validity
-        if (!RuleEngine.isValidPlay(card, pile))
-            return false;
+        if (!RuleEngine.isValidPlay(card, pile)) {
+            if (!isValidPlay(player)) {
+                player.addToHand(pile.getCards());
+                pile.clearPile();
+                return true; // don’t advance turn
+            } else {
+                return false; // Invalid play
+            }
+        }
 
         // Place card
+        if (phase == GamePhase.PLAY_FROM_HAND) {
+            player.getHand().remove(card);
+        } else if (phase == GamePhase.PLAY_FROM_FACE_UP) {
+            player.getFaceUp().remove(card);
+        } else if (phase == GamePhase.PLAY_FROM_FACE_DOWN) {
+            player.getFaceDown().remove(card);
+        }
         pile.addCards(Collections.singletonList(card));
-        player.getHand().remove(card);
-        player.getFaceUp().remove(card);
-        player.getFaceDown().remove(card);
 
         // Handle special cards
         if (card.getRank() == Rank.TWO) {
-            // Reset pile but same player goes again
             pile.clearPile();
             return true; // don’t advance turn
         }
@@ -113,6 +123,15 @@ public class GameManager {
         advanceTurn();
 
         return true;
+    }
+
+    private boolean isValidPlay(Player player) {
+        List<Card> allCards = new ArrayList<>();
+        allCards.addAll(player.getHand());
+        allCards.addAll(player.getFaceUp());
+        allCards.addAll(player.getFaceDown());
+
+        return allCards.stream().anyMatch(c -> RuleEngine.isValidPlay(c, pile));
     }
 
     private void drawUpToFour(Player player) {
