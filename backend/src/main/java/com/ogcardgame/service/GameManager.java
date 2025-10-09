@@ -19,33 +19,41 @@ public class GameManager {
     }
 
     public void addPlayer(String playerId, String name) {
-        if (phase != GamePhase.DEAL) throw new IllegalStateException("Cannot join after deal.");
+        if (phase != GamePhase.DEAL)
+            throw new IllegalStateException("Cannot join after deal.");
         players.add(new Player(playerId, "Player " + name + (players.size() + 1)));
     }
 
     public void startGame() {
-        if (phase != GamePhase.DEAL) throw new IllegalStateException("Game already started.");
-        if (players.size() < 2) throw new IllegalStateException("Need at least 2 players.");
+        if (phase != GamePhase.DEAL)
+            throw new IllegalStateException("Game already started.");
+        if (players.size() < 2)
+            throw new IllegalStateException("Need at least 2 players.");
 
         deck.shuffle();
         for (Player player : players) {
-            for (int i = 0; i < 3; i++) player.getFaceDown().add(deck.draw());
-            for (int i = 0; i < 6; i++) player.getHand().add(deck.draw());
+            for (int i = 0; i < 3; i++)
+                player.getFaceDown().add(deck.draw());
+            for (int i = 0; i < 6; i++)
+                player.getHand().add(deck.draw());
         }
         phase = GamePhase.SELECT_FACE_UP;
     }
 
     public boolean selectFaceUpCards(String playerId, List<String> cardIds) {
-        if (phase != GamePhase.SELECT_FACE_UP) return false;
+        if (phase != GamePhase.SELECT_FACE_UP)
+            return false;
 
         Player player = getPlayer(playerId);
-        if (cardIds.size() != 3) return false;
+        if (cardIds.size() != 3)
+            return false;
 
         List<Card> toSelect = player.getHand().stream()
                 .filter(c -> cardIds.contains(c.getId()))
                 .collect(Collectors.toList());
 
-        if (toSelect.size() != 3) return false;
+        if (toSelect.size() != 3)
+            return false;
 
         player.getFaceUp().addAll(toSelect);
         player.getHand().removeAll(toSelect);
@@ -57,23 +65,26 @@ public class GameManager {
     }
 
     public boolean playCard(String playerId, Card card) {
-        if (phase != GamePhase.PLAY_FROM_HAND && phase != GamePhase.PLAY_FROM_FACE_UP && phase != GamePhase.PLAY_FROM_FACE_DOWN)
+        if (phase != GamePhase.PLAY_FROM_HAND && phase != GamePhase.PLAY_FROM_FACE_UP
+                && phase != GamePhase.PLAY_FROM_FACE_DOWN)
             return false;
 
         Player player = getPlayer(playerId);
 
         // Only current player can act
-        if (!getCurrentPlayer().equals(player)) return false;
+        if (!getCurrentPlayer().equals(player))
+            return false;
 
         // Must own the card
         if (!player.getHand().contains(card) &&
-            !player.getFaceUp().contains(card) &&
-            !player.getFaceDown().contains(card)) {
+                !player.getFaceUp().contains(card) &&
+                !player.getFaceDown().contains(card)) {
             return false;
         }
 
         // Check validity
-        if (!RuleEngine.isValidPlay(card, pile)) return false;
+        if (!RuleEngine.isValidPlay(card, pile))
+            return false;
 
         // Place card
         pile.addCards(Collections.singletonList(card));
@@ -140,7 +151,11 @@ public class GameManager {
     // --- DTOs ---
     public GameStateDTO toGameStateDTO(String requestingPlayerId) {
         List<PlayerDTO> playerDTOs = players.stream()
-                .map(p -> new PlayerDTO(p, p.getPlayerId().equals(requestingPlayerId)))
+                .map(p -> {
+                    PlayerDTO dto = new PlayerDTO(p, p.getPlayerId().equals(requestingPlayerId));
+                    dto.setCurrentTurn(p.equals(getCurrentPlayer())); // ✅ this is where it goes
+                    return dto;
+                })
                 .collect(Collectors.toList());
 
         return new GameStateDTO(
@@ -148,7 +163,6 @@ public class GameManager {
                 playerDTOs,
                 pile.getCards(),
                 getCurrentPlayer().getPlayerId(),
-                phase
-        );
+                phase);
     }
 }
