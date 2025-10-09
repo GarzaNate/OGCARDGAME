@@ -32,6 +32,16 @@ public class Pile {
         return cards.get(cards.size() - 1).getRank();
     }
 
+    public Card peek() {
+        if (cards.isEmpty())
+            return null;
+        return cards.get(cards.size() - 1);
+    }
+
+    public int size() {
+        return cards.size();
+    }
+
     public List<Card> getCards() {
         return new ArrayList<>(cards);
     }

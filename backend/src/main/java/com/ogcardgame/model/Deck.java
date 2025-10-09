@@ -23,7 +23,7 @@ public class Deck {
         Collections.shuffle(cards);
     }
 
-    public Card drawCard() {
+    public Card draw() {
         return !cards.isEmpty() ? cards.remove(cards.size() - 1) : null;
     }
 

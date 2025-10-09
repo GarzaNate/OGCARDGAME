@@ -115,4 +115,23 @@ public class Player {
     public void addCardsToHand(Collection<Card> cards) {
         addToHand(cards);
     }
+
+    public Card findCardById(String cardId) {
+        for (Card card : getHand()) {
+            if (card.getId().equals(cardId)) {
+                return card;
+            }
+        }
+        for (Card card : getFaceUp()) {
+            if (card.getId().equals(cardId)) {
+                return card;
+            }
+        }
+        for (Card card : getFaceDown()) {
+            if (card.getId().equals(cardId)) {
+                return card;
+            }
+        }
+        return null;
+    }
 }

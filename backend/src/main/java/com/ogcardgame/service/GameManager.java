@@ -1,336 +1,151 @@
 package com.ogcardgame.service;
 
-import java.util.*;
 import com.ogcardgame.model.*;
 import com.ogcardgame.dto.*;
 
+import java.util.*;
+import java.util.stream.Collectors;
+
 public class GameManager {
-
-    private final String gameId;
+    private final String id;
     private final List<Player> players = new ArrayList<>();
-    private Deck deck;
+    private final Deck deck = new Deck();
     private final Pile pile = new Pile();
-
-    private int currPlayerIndex = 0;
+    private int currentPlayerIndex = 0;
     private GamePhase phase = GamePhase.DEAL;
 
-    private boolean gameOver = false;
-    private Player winner = null;
-
-    public GameManager(String gameId) {
-        this.gameId = gameId;
+    public GameManager(String id) {
+        this.id = id;
     }
 
-    // PLAYER MANAGEMENT
-    // -----------------
-    public void addPlayer(Player player) {
-        if (phase != GamePhase.DEAL) {
-            throw new IllegalStateException("Cannot add players after the game has started.");
-        }
-        if (players.size() >= 4) {
-            throw new IllegalStateException("Cannot add more than 4 players.");
-        }
-        players.add(player);
+    public void addPlayer(String playerId) {
+        if (phase != GamePhase.DEAL) throw new IllegalStateException("Cannot join after deal.");
+        players.add(new Player(playerId, "Player " + (players.size() + 1)));
     }
 
-    // GAME START
-    // --------------
     public void startGame() {
-        if (players.size() < 2 || players.size() > 4) {
-            throw new IllegalStateException("Game requires 2 to 4 players.");
-        }
+        if (phase != GamePhase.DEAL) throw new IllegalStateException("Game already started.");
+        if (players.size() < 2) throw new IllegalStateException("Need at least 2 players.");
 
-        deck = new Deck();
         deck.shuffle();
-
-        // DEAL INITIAL CARDS TO PLAYERS
         for (Player player : players) {
-            for (int i = 0; i < 3; i++) {
-                player.addToFaceDown(deck.drawCard());
-            }
-            for (int i = 0; i < 7; i++) {
-                player.addToHand(deck.drawCard());
-            }
+            for (int i = 0; i < 3; i++) player.getFaceDown().add(deck.draw());
+            for (int i = 0; i < 6; i++) player.getHand().add(deck.draw());
         }
         phase = GamePhase.SELECT_FACE_UP;
     }
 
-    // PHASE 1: FACE UP SELECTION
-    // --------------------------------
-    public boolean selectFaceUpCards(String playerId, List<Card> selectedCards) {
-        if (phase != GamePhase.SELECT_FACE_UP)
-            return false;
+    public boolean selectFaceUpCards(String playerId, List<String> cardIds) {
+        if (phase != GamePhase.SELECT_FACE_UP) return false;
 
-        Player player = getPlayerById(playerId);
-        if (!player.getHand().containsAll(selectedCards))
-            return false;
-        if (selectedCards.size() != 3)
-            return false;
+        Player player = getPlayer(playerId);
+        if (cardIds.size() != 3) return false;
 
-        player.removeFromHand(selectedCards);
-        selectedCards.forEach(player::addToFaceUp);
+        List<Card> toSelect = player.getHand().stream()
+                .filter(c -> cardIds.contains(c.getId()))
+                .collect(Collectors.toList());
 
-        boolean allSelected = players.stream()
-                .allMatch(p -> p.getFaceUp().size() == 3);
+        if (toSelect.size() != 3) return false;
 
-        if (allSelected)
+        player.getFaceUp().addAll(toSelect);
+        player.getHand().removeAll(toSelect);
+
+        if (players.stream().allMatch(p -> p.getFaceUp().size() == 3)) {
             phase = GamePhase.PLAY_FROM_HAND;
+        }
         return true;
     }
 
-    // PHASES 2-4: PLAY CARDS
-    // --------------------------------
+    public boolean playCard(String playerId, Card card) {
+        Player player = getPlayer(playerId);
 
-    public boolean playCards(String playerId, List<Card> cardsToPlay) {
-        if (gameOver)
-            return false;
-        Player player = getPlayerById(playerId);
+        // Only current player can act
+        if (!getCurrentPlayer().equals(player)) return false;
 
-        switch (phase) {
-            case PLAY_FROM_HAND:
-                if (!player.getHand().containsAll(cardsToPlay))
-                    return false;
-                return playFromHand(player, cardsToPlay);
-
-            case PLAY_FROM_FACE_UP:
-                if (!player.getFaceUp().containsAll(cardsToPlay))
-                    return false;
-                return playFromFaceUp(player, cardsToPlay);
-
-            case PLAY_FROM_FACE_DOWN:
-                if (cardsToPlay.size() != 1)
-                    return false;
-                if (!player.getFaceDown().contains(cardsToPlay.get(0)))
-                    return false;
-                return playFromFaceDown(player, cardsToPlay.get(0));
-
-            default:
-                return false;
-        }
-    }
-
-    private boolean playFromHand(Player player, List<Card> cards) {
-        if (!isValidPlay(cards)) {
-            player.addToHand(pile.clearPile());
-            drawUpToFour(player);
-            nextTurn();
+        // Must own the card
+        if (!player.getHand().contains(card) &&
+            !player.getFaceUp().contains(card) &&
+            !player.getFaceDown().contains(card)) {
             return false;
         }
 
-        removeCardsFromPlayer(player, cards);
-        pile.addCards(cards);
+        // Check validity
+        if (!RuleEngine.isValidPlay(card, pile)) return false;
 
-        boolean repeatTurn = handleSpecialRanks(cards);
+        // Place card
+        pile.addCards(Collections.singletonList(card));
+        player.getHand().remove(card);
+        player.getFaceUp().remove(card);
+        player.getFaceDown().remove(card);
+
+        // Handle special cards
+        if (card.getRank() == Rank.TWO) {
+            // Reset pile but same player goes again
+            pile.clearPile();
+            return true; // don’t advance turn
+        }
+        if (card.getRank() == Rank.TEN) {
+            // Burn pile and same player goes again
+            pile.clearPile();
+            return true;
+        }
+        if (RuleEngine.isBomb(pile)) {
+            pile.clearPile();
+            return true; // same player goes again
+        }
+
+        // Normal turn advancement
         drawUpToFour(player);
+        advanceTurn();
 
-        if (player.getHand().isEmpty() && deck.isEmpty()) {
-            phase = GamePhase.PLAY_FROM_FACE_UP;
-        }
-
-        checkGameOver();
-        if (!repeatTurn)
-            nextTurn();
         return true;
     }
-
-    private boolean playFromFaceUp(Player player, List<Card> cards) {
-        if (!isValidPlay(cards)) {
-            player.addToHand(pile.clearPile());
-            nextTurn();
-            return false;
-        }
-
-        removeCardsFromPlayer(player, cards);
-        pile.addCards(cards);
-        boolean repeatTurn = handleSpecialRanks(cards);
-
-        if (player.getFaceUp().isEmpty()) {
-            phase = GamePhase.PLAY_FROM_FACE_DOWN;
-        }
-
-        checkGameOver();
-        if (!repeatTurn)
-            nextTurn();
-        return true;
-    }
-
-    private boolean playFromFaceDown(Player player, Card card) {
-        // Blind play - must play card, then check if valid
-        player.removeFromFaceDown(card);
-        pile.addCards(List.of(card));
-
-        if (!isValidPlay(List.of(card))) {
-            player.addToHand(pile.clearPile());
-        }
-
-        boolean repeatTurn = handleSpecialRanks(List.of(card));
-
-        checkGameOver();
-        if (!repeatTurn)
-            nextTurn();
-        return true;
-    }
-
-    // GAME STATE
-    // ----------------
-    public GameStateDTO toGameStateDTO(String requestingPlayerId) {
-        GameStateDTO dto = new GameStateDTO();
-        dto.setGameID(this.gameId);
-        dto.setPhase(this.phase);
-        dto.setCurrentPlayerId(players.get(currPlayerIndex).getId());
-        dto.setPile(pile.getCards());
-        dto.setGameOver(gameOver);
-        dto.setWinnerId(winner != null ? winner.getId() : null);
-
-        List<PlayerDTO> playerDTOs = new ArrayList<>();
-        for (Player player : players) {
-            PlayerDTO playerDTO = new PlayerDTO();
-            playerDTO.setPlayerId(player.getId());
-            playerDTO.setName(player.getName());
-            playerDTO.setFaceUp(player.getFaceUp());
-            playerDTO.setFaceDownCount(player.getFaceDown().size());
-            playerDTO.setCurrentTurn(player.getId().equals(dto.getCurrentPlayerId()));
-
-            if (player.getId().equals(requestingPlayerId)) {
-                playerDTO.setHand(new ArrayList<>(player.getHand()));
-            } else {
-                playerDTO.setHandSize(player.getHand().size()); // Hide hand for other players
-            }
-
-            playerDTO.setFaceUp(new ArrayList<>(player.getFaceUp()));
-
-            if (player.getId().equals(requestingPlayerId)) {
-                playerDTO.setFaceDownCount((player.getFaceDown().size()));
-            } else {
-                playerDTO.setFaceDownCount(player.getFaceDown().size()); // Hide face down cards for others
-            }
-
-            playerDTOs.add(playerDTO);
-        }
-        dto.setPlayers(playerDTOs);
-        return dto;
-    }
-
-    // HELPERS
-    // ----------------
 
     private void drawUpToFour(Player player) {
         while (player.getHand().size() < 4 && !deck.isEmpty()) {
-            player.addToHand(deck.drawCard());
+            player.getHand().add(deck.draw());
         }
     }
 
-    private boolean isValidPlay(List<Card> cardsToPlay) {
-        if (cardsToPlay.isEmpty())
-            return false;
-
-        Rank playedRank = cardsToPlay.get(0).getRank();
-
-        boolean allSameRank = cardsToPlay.stream()
-                .allMatch(card -> card.getRank() == playedRank);
-
-        if (!allSameRank)
-            return false;
-        if (pile.isEmpty())
-            return true;
-
-        Rank topRank = pile.getTopRank();
-
-        if (playedRank == Rank.TWO)
-            return true;
-        if (playedRank == Rank.TEN)
-            return true;
-
-        return playedRank.getValue() >= topRank.getValue();
-    }
-
-    private boolean isBomb(Pile pile) {
-        List<Card> pileCards = pile.getCards();
-        if (pileCards.size() < 4)
-            return false;
-        Rank firstRank = pileCards.get(pileCards.size() - 1).getRank();
-
-        long count = pileCards.stream()
-                .filter(card -> card.getRank() == firstRank)
-                .count();
-
-        return count >= 4;
+    private void advanceTurn() {
+        currentPlayerIndex = (currentPlayerIndex + 1) % players.size();
+        checkGameOver();
     }
 
     private void checkGameOver() {
-        long activePlayers = players.stream()
-                .filter(player -> !player.outOfCards())
-                .count();
-
-        if (activePlayers <= 1) {
-            gameOver = true;
-            winner = players.stream()
-                    .filter(player -> !player.outOfCards())
-                    .findFirst()
-                    .orElse(null);
+        Optional<Player> winner = players.stream()
+                .filter(p -> p.getHand().isEmpty()
+                        && p.getFaceUp().isEmpty()
+                        && p.getFaceDown().isEmpty())
+                .findFirst();
+        if (winner.isPresent()) {
             phase = GamePhase.END;
         }
     }
 
-    private void removeCardsFromPlayer(Player player, List<Card> cards) {
-        switch (phase) {
-            case PLAY_FROM_HAND:
-                player.removeFromHand(cards);
-                break;
-            case PLAY_FROM_FACE_UP:
-                player.removeFromFaceUp(cards);
-                break;
-            default:
-                throw new IllegalStateException("Cannot remove cards in current phase: " + phase);
-        }
+    private Player getCurrentPlayer() {
+        return players.get(currentPlayerIndex);
     }
 
-    private Player getPlayerById(String playerId) {
+    public Player getPlayer(String playerId) {
         return players.stream()
-                .filter(player -> player.getId().equals(playerId))
+                .filter(p -> p.getPlayerId().equals(playerId))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Player not found: " + playerId));
+                .orElseThrow();
     }
 
-    private boolean handleSpecialRanks(List<Card> cards) {
-        Rank playedRank = cards.get(0).getRank();
-        if (playedRank == Rank.TEN) {
-            // Ten clears the pile
-            pile.clearPile();
-            return true;
-        } else if (playedRank == Rank.TWO) {
-            // Two resets top value of pile
-            return true;
-        }
+    // --- DTOs ---
+    public GameStateDTO toGameStateDTO(String requestingPlayerId) {
+        List<PlayerDTO> playerDTOs = players.stream()
+                .map(p -> new PlayerDTO(p, p.getPlayerId().equals(requestingPlayerId)))
+                .collect(Collectors.toList());
 
-        if (isBomb(pile)) {
-            pile.clearPile();
-            return false; // Bomb clears pile, no repeat turn
-        }
-        return false;
-    }
-
-    public GamePhase getPhase() {
-        return phase;
-    }
-
-    public Player getCurrentPlayer() {
-        return players.get(currPlayerIndex);
-    }
-
-    public void nextTurn() {
-        currPlayerIndex = (currPlayerIndex + 1) % players.size();
-
-        while (players.get(currPlayerIndex).outOfCards()) {
-            currPlayerIndex = (currPlayerIndex + 1) % players.size();
-        }
-    }
-
-    public boolean isGameOver() {
-        return gameOver;
-    }
-
-    public Player getWinner() {
-        return winner;
+        return new GameStateDTO(
+                id,
+                playerDTOs,
+                pile.getCards(),
+                getCurrentPlayer().getPlayerId(),
+                phase
+        );
     }
 }

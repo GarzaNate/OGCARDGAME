@@ -12,6 +12,16 @@ public class GameStateDTO {
     private boolean gameOver;
     private String winnerId;
 
+    public GameStateDTO(String gameID, List<PlayerDTO> players, List<Card> pile, String currentPlayerId, GamePhase phase) {
+        this.gameID = gameID;
+        this.players = players;
+        this.pile = pile;
+        this.currentPlayerId = currentPlayerId;
+        this.phase = phase;
+        this.gameOver = false;
+        this.winnerId = null;
+    }
+
     // GETTERS
     public String getGameID() {
         return gameID;
