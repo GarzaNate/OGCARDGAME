@@ -4,6 +4,8 @@ import com.ogcardgame.dto.GameStateDTO;
 import com.ogcardgame.model.Card;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,11 +34,25 @@ public class GameManagerService {
         game.selectFaceUpCards(playerId, cardIds);
     }
 
-    public void playCard(String gameId, String playerId, String cardId) {
+    public void playCards(String gameId, String playerId, List<String> cardIds) {
         GameManager game = getOrCreateGame(gameId);
-        // You’ll need a way to find the card by ID
-        Card card = game.getPlayer(playerId).findCardById(cardId);
-        game.playCard(playerId, card);
+
+        // Convert card IDs into Card objects
+        List<Card> cardsToPlay = new ArrayList<>();
+        for (String cardId : cardIds) {
+            Card card = game.getPlayer(playerId).findCardById(cardId);
+            if (card != null) {
+                cardsToPlay.add(card);
+            }
+        }
+
+        if (!cardsToPlay.isEmpty()) {
+            game.playCards(playerId, cardsToPlay);
+        }
+    }
+
+    public void playCard(String gameId, String playerId, String cardId) {
+        playCards(gameId, playerId, Collections.singletonList(cardId));
     }
 
     public GameStateDTO getGameState(String gameId) {

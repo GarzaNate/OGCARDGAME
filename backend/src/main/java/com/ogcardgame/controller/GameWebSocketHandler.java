@@ -76,8 +76,46 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     }
 
     private void handlePlay(String gameId, String playerId, Map<String, Object> data) {
-        String cardId = (String) data.get("cardId");
-        gameManagerService.playCard(gameId, playerId, cardId);
+        // Prefer cardIds (multi-play). If not present, fall back to single cardId.
+        Object maybeIds = data.get("cardIds");
+        if (maybeIds != null) {
+            List<String> cardIds = objectMapper.convertValue(maybeIds,
+                    new TypeReference<List<String>>() {
+                    });
+            try {
+                gameManagerService.playCards(gameId, playerId, cardIds);
+            } catch (Exception e) {
+                // sendError to the session that initiated this action
+                try {
+                    sendErrorIfSessionKnown(playerId, e.getMessage());
+                } catch (IOException ignored) {
+                }
+            }
+        } else {
+            String cardId = (String) data.get("cardId");
+            try {
+                gameManagerService.playCard(gameId, playerId, cardId); // wrapper calls playCards(...)
+            } catch (Exception e) {
+                try {
+                    sendErrorIfSessionKnown(playerId, e.getMessage());
+                } catch (IOException ignored) {
+                }
+            }
+        }
+    }
+
+    // Helper to send error to the originating player's session
+    private void sendErrorIfSessionKnown(String playerId, String message) throws IOException {
+        String sessionId = sessionToPlayer.entrySet().stream()
+                .filter(e -> e.getValue().equals(playerId))
+                .map(Map.Entry::getKey)
+                .findFirst()
+                .orElse(null);
+        if (sessionId != null) {
+            WebSocketSession s = sessions.get(sessionId);
+            if (s != null && s.isOpen())
+                sendError(s, message);
+        }
     }
 
     private void handleSelectFaceUp(String gameId, String playerId, Map<String, Object> data) {

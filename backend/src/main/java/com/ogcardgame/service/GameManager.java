@@ -64,74 +64,85 @@ public class GameManager {
         return true;
     }
 
-    public boolean playCard(String playerId, Card card) {
+    public boolean playCards(String playerId, java.util.List<Card> cardsToPlay) {
         if (phase != GamePhase.PLAY_FROM_HAND && phase != GamePhase.PLAY_FROM_FACE_UP
                 && phase != GamePhase.PLAY_FROM_FACE_DOWN)
             return false;
 
         Player player = getPlayer(playerId);
 
-        // change this to allow for slaps
+        // Only current player can act (modify if slap rules apply)
         if (!getCurrentPlayer().equals(player))
             return false;
 
-        // Must own the card
-        if (!player.getHand().contains(card) &&
-                !player.getFaceUp().contains(card) &&
-                !player.getFaceDown().contains(card)) {
+        // --- Phase-based restriction ---
+        if (phase == GamePhase.PLAY_FROM_FACE_DOWN && cardsToPlay.size() > 1) {
+            // Can only play one card when face-down
             return false;
         }
 
-        // Check validity
-        if (!RuleEngine.isValidPlay(card, pile)) {
-            if (!isValidPlay(player)) {
+        // Ensure all cards are actually owned by the player
+        boolean ownsAll = cardsToPlay.stream().allMatch(c -> player.getHand().contains(c) ||
+                player.getFaceUp().contains(c) ||
+                player.getFaceDown().contains(c));
+        if (!ownsAll)
+            return false;
+
+        // Validate the selection
+        if (!RuleEngine.isValidPlay(cardsToPlay, pile)) {
+            // If invalid and no valid plays exist, player picks up pile
+            if (!hasAnyValidPlay(player)) {
                 player.addToHand(pile.getCards());
                 pile.clearPile();
-                return true; // don’t advance turn
-            } else {
-                return false; // Invalid play
+                return true;
             }
+            return false;
         }
 
-        // Place card
-        if (phase == GamePhase.PLAY_FROM_HAND) {
+        // --- Play cards ---
+        for (Card card : cardsToPlay) {
             player.getHand().remove(card);
-        } else if (phase == GamePhase.PLAY_FROM_FACE_UP) {
             player.getFaceUp().remove(card);
-        } else if (phase == GamePhase.PLAY_FROM_FACE_DOWN) {
             player.getFaceDown().remove(card);
         }
-        pile.addCards(Collections.singletonList(card));
+        pile.addCards(cardsToPlay);
 
-        // Handle special cards
-        if (card.getRank() == Rank.TWO) {
-            pile.clearPile();
-            return true; // don’t advance turn
+        Rank playedRank = cardsToPlay.get(0).getRank();
+
+        // --- Handle special cards ---
+        if (playedRank == Rank.TWO) {
+            pile.clearPile(); // reset pile, same player continues
+            return true;
         }
-        if (card.getRank() == Rank.TEN) {
-            // Burn pile and same player goes again
-            pile.clearPile();
+        if (playedRank == Rank.TEN) {
+            pile.clearPile(); // burn pile, same player continues
             return true;
         }
         if (RuleEngine.isBomb(pile)) {
-            pile.clearPile();
-            return true; // same player goes again
+            pile.clearPile(); // 4 of same rank bomb
+            return true;
         }
 
-        // Normal turn advancement
+        // --- Normal turn advancement ---
         drawUpToFour(player);
         advanceTurn();
 
         return true;
     }
 
-    private boolean isValidPlay(Player player) {
-        List<Card> allCards = new ArrayList<>();
+    private boolean hasAnyValidPlay(Player player) {
+        java.util.List<Card> allCards = new java.util.ArrayList<>();
         allCards.addAll(player.getHand());
         allCards.addAll(player.getFaceUp());
         allCards.addAll(player.getFaceDown());
 
-        return allCards.stream().anyMatch(c -> RuleEngine.isValidPlay(c, pile));
+        // Check all possible single-card plays
+        for (Card card : allCards) {
+            if (RuleEngine.isValidPlay(java.util.Collections.singletonList(card), pile)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void drawUpToFour(Player player) {
