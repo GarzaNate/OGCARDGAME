@@ -1,28 +1,46 @@
 import Pile from "./Pile";
 import PlayerArea from "./PlayerArea";
 
-export default function GameBoard({ players, selfPlayerId, drawPileCount, discardPileCards, onDraw }) {
+export default function GameBoard({
+    players = [],
+    selfPlayerId,
+    drawPileCount = 0,
+    discardPileCards = [],
+    onDraw
+}) {
     const selfPlayer = players.find(p => p.id === selfPlayerId);
-    const otherPlayers = players.filter(p => p.id !== selfPlayerId);
+    const others = players.filter(p => p.id !== selfPlayerId);
+
+    const topPlayer = others[0] || null;
+    const rightPlayer = others[1] || null;
+    const leftPlayer = others[2] || null;
 
     return (
-        <div className="w-full h-screen bg-black flex flex-col justify-between items-center p-4">
-            {/* Top Area: Other players */}
-            <div className="flex flex-wrap justify-around w-full gap-4">
-                {otherPlayers.map((player) => (
-                    <PlayerArea key={player.id} player={player} isSelf={false} />
-                ))}
+        <div className="w-screen h-screen bg-black grid grid-rows-[1fr_auto_1fr] grid-cols-[1fr_auto_1fr] gap-2">
+            {/* Top Player */}
+            <div className="flex justify-center items-center row-start-1 col-start-2">
+                {topPlayer && <PlayerArea player={topPlayer} position="top" />}
             </div>
 
-            {/* Center Area: Draw & Discard Piles */}
-            <div className="flex flex-wrap gap-8 justify-center items-center mt-16 mb-16">
+            {/* Left Player */}
+            <div className="flex justify-center items-center row-start-2 col-start-1">
+                {leftPlayer && <PlayerArea player={leftPlayer} position="left" />}
+            </div>
+
+            {/* Center Piles */}
+            <div className="flex justify-center items-center row-start-2 col-start-2 gap-4">
                 <Pile type="draw" remaining={drawPileCount} onClick={onDraw} />
                 <Pile type="discard" cards={discardPileCards} />
             </div>
 
-            {/* Bottom Area: Self player */}
-            <div className="w-full flex justify-center">
-                <PlayerArea player={selfPlayer} isSelf={true} />
+            {/* Right Player */}
+            <div className="flex justify-center items-center row-start-2 col-start-3">
+                {rightPlayer && <PlayerArea player={rightPlayer} position="right" />}
+            </div>
+
+            {/* Bottom Player (self) */}
+            <div className="flex justify-center items-center row-start-3 col-start-2">
+                {selfPlayer && <PlayerArea player={selfPlayer} isSelf={true} position="bottom" />}
             </div>
         </div>
     );
