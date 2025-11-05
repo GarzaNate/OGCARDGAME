@@ -183,7 +183,7 @@ public class GameManager {
         List<PlayerDTO> playerDTOs = players.stream()
                 .map(p -> {
                     PlayerDTO dto = new PlayerDTO(p, p.getPlayerId().equals(requestingPlayerId));
-                    dto.setCurrentTurn(p.equals(getCurrentPlayer())); // ✅ this is where it goes
+                    dto.setCurrentTurn(p.equals(getCurrentPlayer()));
                     return dto;
                 })
                 .collect(Collectors.toList());

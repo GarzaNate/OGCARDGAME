@@ -4,18 +4,25 @@ import com.ogcardgame.dto.GameStateDTO;
 import com.ogcardgame.model.Card;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class GameManagerService {
 
     private final Map<String, GameManager> games = new HashMap<>();
 
-    private GameManager getOrCreateGame(String gameId) {
+    public String createGame() {
+        String gameId = generateGameId();
+        games.put(gameId, new GameManager(gameId));
+        System.out.println("Created game with ID: " + gameId);
+        return gameId;
+    }
+
+    private String generateGameId() {
+        return "game-" + UUID.randomUUID().toString().substring(0,6);
+    }
+
+    public GameManager getOrCreateGame(String gameId) {
         return games.computeIfAbsent(gameId, id -> new GameManager(id));
     }
 
