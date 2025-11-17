@@ -31,40 +31,102 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     }
 
     @Override
+    public void handleTransportError(WebSocketSession session, Throwable exception) {
+        System.err.println("Transport error in session " + session.getId() + ": " + exception.getMessage());
+    }
+
+    @Override
     public void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
-        Map<String, Object> data = objectMapper.readValue(message.getPayload(),
-                new TypeReference<Map<String, Object>>() {
-                });
+        String payload = message.getPayload();
+        System.out.println("Received message from session " + session.getId() + ": " + payload);
 
-        String action = (String) data.get("action");
-        String gameId = (String) data.get("gameId");
-        String playerId = (String) data.get("playerId");
-
-        switch (action) {
-            case "join":
-                String name = (String) data.get("name");
-                gameManagerService.addPlayer(gameId, playerId, name);
-                sessionToPlayer.put(session.getId(), playerId);
-                sessionToGame.put(session.getId(), gameId);
-                break;
-
-            case "start":
-                handleStart(gameId, playerId);
-                break;
-
-            case "play":
-                handlePlay(gameId, playerId, data);
-                break;
-
-            case "selectFaceUp":
-                handleSelectFaceUp(gameId, playerId, data);
-                break;
-
-            default:
-                System.out.println("Unknown action: " + action);
+        Map<String, Object> data;
+        try {
+            data = objectMapper.readValue(message.getPayload(),
+                    new TypeReference<Map<String, Object>>() {
+                    });
+        } catch (Exception e) {
+            // Bad JSON — notify sender and return
+            sendError(session, "Invalid JSON payload");
+            return;
         }
 
-        broadcastGameState(gameId);
+        // Accept either "action" or "type" from clients.
+        String action = null;
+        if (data.get("action") instanceof String) {
+            action = (String) data.get("action");
+        } else if (data.get("type") instanceof String) {
+            action = (String) data.get("type");
+        }
+
+        String gameId = data.get("gameId") instanceof String ? (String) data.get("gameId") : null;
+        String playerId = data.get("playerId") instanceof String ? (String) data.get("playerId") : null;
+
+        if (action == null) {
+            sendError(session, "Missing action/type field");
+            return;
+        }
+
+        try {
+            switch (action) {
+                case "join":
+                    // 'name' should be provided by client
+                    String name = data.get("name") instanceof String ? (String) data.get("name") : null;
+                    if (gameId == null || playerId == null || name == null) {
+                        sendError(session, "join requires gameId, playerId, and name");
+                    } else {
+                        gameManagerService.addPlayer(gameId, playerId, name);
+                        sessionToPlayer.put(session.getId(), playerId);
+                        sessionToGame.put(session.getId(), gameId);
+                    }
+                    break;
+
+                case "start":
+                    if (gameId == null || playerId == null) {
+                        sendError(session, "start requires gameId and playerId");
+                    } else {
+                        handleStart(gameId, playerId);
+                    }
+                    break;
+
+                case "play":
+                    if (gameId == null || playerId == null) {
+                        sendError(session, "play requires gameId and playerId");
+                    } else {
+                        handlePlay(gameId, playerId, data);
+                    }
+                    break;
+
+                case "selectFaceUp":
+                    if (gameId == null || playerId == null) {
+                        sendError(session, "selectFaceUp requires gameId and playerId");
+                    } else {
+                        handleSelectFaceUp(gameId, playerId, data);
+                    }
+                    break;
+
+                default:
+                    sendError(session, "Unknown action: " + action);
+                    break;
+            }
+        } catch (Exception e) {
+            // catch exceptions from gameManagerService and send them back to the calling
+            // client
+            System.err.println("Error handling action " + action + ": " + e.getMessage());
+            try {
+                sendErrorIfSessionKnown(playerId, e.getMessage() != null ? e.getMessage() : "Server error");
+            } catch (IOException ignored) {
+            }
+        }
+
+        // Only broadcast if we have a gameId (and something changed)
+        if (gameId != null) {
+            try {
+                broadcastGameState(gameId);
+            } catch (Exception e) {
+                System.err.println("Failed to broadcast game state: " + e.getMessage());
+            }
+        }
     }
 
     public void sendError(WebSocketSession session, String error) throws IOException {
