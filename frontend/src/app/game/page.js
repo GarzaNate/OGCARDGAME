@@ -10,19 +10,15 @@ export default function GamePage() {
 
     const gameId = "game-1234";
 
-    const { connected, messages, sendMessage } =
-        useGameWebSocket(playerId);
+    const { connected, messages, sendMessage, sendAction } =
+        useGameWebSocket(playerId, gameId);
 
     const hasJoinedRef = useRef(false);
 
     useEffect(() => {
         if (connected && !hasJoinedRef.current) {
-            sendMessage({
-                action: "join",
-                playerId,
-                gameId,
-                name: "Nate",
-            });
+            if (sendAction) sendAction("join", { playerId, gameId, name: "Nate" });
+            else sendMessage({ action: "join", playerId, gameId, name: "Nate" });
             hasJoinedRef.current = true;
         }
     }, [connected]);
@@ -46,12 +42,9 @@ export default function GamePage() {
             <button
                 className="mt-4 px-4 py-2 bg-blue-500 rounded hover:bg-blue-600"
                 onClick={() =>
-                    sendMessage({
-                        action: "join",
-                        playerId,
-                        gameId: "some-existing-id",
-                        name: "Nate",
-                    })
+                    sendAction
+                        ? sendAction("join", { playerId, gameId: "some-existing-id", name: "Nate" })
+                        : sendMessage({ action: "join", playerId, gameId: "some-existing-id", name: "Nate" })
                 }
             >
                 Join Game

@@ -1,8 +1,8 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 
-export default function useGameWebSocket(playerId) {
-    console.log("useGameWebSocket HOOK INIT for player:", playerId);
+export default function useGameWebSocket(playerId, gameId) {
+    console.log("useGameWebSocket HOOK INIT for player:", playerId, "gameId:", gameId);
 
     const wsRef = useRef(null);
     const reconnectTimer = useRef(null);
@@ -15,11 +15,13 @@ export default function useGameWebSocket(playerId) {
         const connect = () => {
             if (wsRef.current || isUnmounted) return;
 
-            console.log("Opening WS for player:", playerId);
+            console.log("Opening WS for player:", playerId, "game:", gameId);
 
-            const socket = new WebSocket(
-                `ws://localhost:8080/ws/game?playerId=${playerId}`
-            );
+            const qs = new URLSearchParams();
+            if (playerId) qs.set("playerId", playerId);
+            if (gameId) qs.set("gameId", gameId);
+
+            const socket = new WebSocket(`ws://localhost:8080/ws/game?${qs.toString()}`);
 
             wsRef.current = socket;
 
@@ -63,15 +65,14 @@ export default function useGameWebSocket(playerId) {
 
         return () => {
             isUnmounted = true;
-            if (reconnectTimer.current)
-                clearTimeout(reconnectTimer.current);
+            if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
 
             if (wsRef.current) {
                 wsRef.current.close(1000, "Client disconnect");
                 wsRef.current = null;
             }
         };
-    }, [playerId]); // playerId is now stable
+    }, [playerId, gameId]);
 
     const sendMessage = (msg) => {
         const socket = wsRef.current;
@@ -91,5 +92,10 @@ export default function useGameWebSocket(playerId) {
         attempt();
     };
 
-    return { connected, messages, sendMessage };
+    // Helper to send structured action messages: { action: 'join'|'play'|... , payload... }
+    const sendAction = (action, payload = {}) => {
+        sendMessage({ action, ...payload });
+    };
+
+    return { connected, messages, sendMessage, sendAction };
 }

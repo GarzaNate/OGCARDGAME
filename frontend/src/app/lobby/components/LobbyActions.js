@@ -1,34 +1,31 @@
-export default function LobbyActions({ isHost, players, sendMessage, playerId, playerName, gameId }) {
+export default function LobbyActions({ isHost, players, sendMessage, sendAction, playerId, playerName, gameId }) {
     const maxPlayers = 4;
     const canStart = isHost && players.length >= 2;
 
     const handleJoin = () => {
-        sendMessage({
-            action: "join",
-            gameId,
-            playerId,
-            name: playerName,
-        });
+        if (sendAction) {
+            sendAction("join", { gameId, playerId, name: playerName });
+        } else {
+            sendMessage({ action: "join", gameId, playerId, name: playerName });
+        }
     };
 
     const handleStart = () => {
-        sendMessage({
-            action: "start",
-            gameId,
-            playerId,
-        });
+        if (sendAction) {
+            sendAction("start", { gameId, playerId });
+        } else {
+            sendMessage({ action: "start", gameId, playerId });
+        }
     };
 
     const handleReady = () => {
         // If your backend supports ready flag, you can send it here
         // For now we’ll just send join again as a placeholder
-        sendMessage({
-            action: "join",
-            gameId,
-            playerId,
-            name: playerName,
-            ready: true, // optional
-        });
+        if (sendAction) {
+            sendAction("ready", { gameId, playerId, ready: true });
+        } else {
+            sendMessage({ action: "join", gameId, playerId, name: playerName, ready: true });
+        }
     };
 
     return (

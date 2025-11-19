@@ -188,16 +188,21 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     }
 
     private void broadcastGameState(String gameId) throws Exception {
-        GameStateDTO dto = gameManagerService.getGameState(gameId);
-        String json = objectMapper.writeValueAsString(dto);
-
+        // Send a tailored game state to each connected session in this game.
         for (Map.Entry<String, String> entry : sessionToGame.entrySet()) {
-            if (entry.getValue().equals(gameId)) {
-                WebSocketSession playerSession = sessions.get(entry.getKey());
-                if (playerSession != null && playerSession.isOpen()) {
-                    playerSession.sendMessage(new TextMessage(json));
-                }
-            }
+            if (!entry.getValue().equals(gameId)) continue;
+
+            String sessionId = entry.getKey();
+            WebSocketSession playerSession = sessions.get(sessionId);
+            if (playerSession == null || !playerSession.isOpen()) continue;
+
+            // Find the playerId associated with this session (may be null)
+            String playerId = sessionToPlayer.get(sessionId);
+
+            GameStateDTO dto = gameManagerService.getGameState(gameId, playerId == null ? "" : playerId);
+            String json = objectMapper.writeValueAsString(dto);
+
+            playerSession.sendMessage(new TextMessage(json));
         }
     }
 

@@ -64,6 +64,15 @@ public class GameManagerService {
 
     public GameStateDTO getGameState(String gameId) {
         GameManager game = getOrCreateGame(gameId);
-        return game.toGameStateDTO("dummy"); // You can pass the player ID if needed
+        return game.toGameStateDTO("dummy"); // backward compatible: no private hands
+    }
+
+    /**
+     * Return a GameStateDTO tailored for a specific requesting player.
+     * The GameManager will include the requesting player's private hand only for that player.
+     */
+    public GameStateDTO getGameState(String gameId, String requestingPlayerId) {
+        GameManager game = getOrCreateGame(gameId);
+        return game.toGameStateDTO(requestingPlayerId);
     }
 }
