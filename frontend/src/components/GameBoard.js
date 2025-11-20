@@ -6,7 +6,9 @@ export default function GameBoard({
     selfPlayerId,
     drawPileCount = 0,
     discardPileCards = [],
-    onDraw
+    onDraw,
+    onPlayCard,
+    onPlayCards
 }) {
     const selfPlayer = players.find(p => p.id === selfPlayerId);
     const others = players.filter(p => p.id !== selfPlayerId);
@@ -40,7 +42,7 @@ export default function GameBoard({
 
             {/* Bottom Player (self) */}
             <div className="flex justify-center items-center row-start-3 col-start-2">
-                {selfPlayer && <PlayerArea player={selfPlayer} isSelf={true} position="bottom" />}
+                {selfPlayer && <PlayerArea player={selfPlayer} isSelf={true} position="bottom" onPlayCard={onPlayCard} onPlayCards={onPlayCards} />}
             </div>
         </div>
     );

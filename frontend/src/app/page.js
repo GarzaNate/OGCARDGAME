@@ -38,55 +38,59 @@ export default function HomePage() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen bg-gray-100 p-4">
-      <h1 className="text-3xl font-bold mb-6">Welcome to Shithead</h1>
-
-      {/* Username input */}
-      {!user.username && (
-        <div className="flex flex-col items-center mb-6 space-y-2">
-          <input
-            type="text"
-            placeholder="Enter your username"
-            value={nameInput}
-            onChange={(e) => setNameInput(e.target.value)}
-            className="px-4 py-2 rounded border w-64"
-          />
-          <button
-            onClick={handleSetName}
-            className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
-          >
-            Save Username
-          </button>
-        </div>
-      )}
-
-      {/* Show if username is set */}
-      {user.username && (
-        <div className="flex flex-col items-center space-y-4">
-          <p className="text-lg">Hello, {user.username}!</p>
-          <div className="flex space-x-4">
-            <button
-              onClick={handleCreateGame}
-              className="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600"
-            >
-              Create Game
-            </button>
-            <input
-              type="text"
-              placeholder="Enter game ID"
-              value={joinId}
-              onChange={(e) => setJoinId(e.target.value)}
-              className="px-4 py-2 rounded border w-32"
-            />
-            <button
-              onClick={handleJoinGame}
-              className="bg-yellow-400 text-white py-2 px-4 rounded hover:bg-yellow-500"
-            >
-              Join Game
-            </button>
+    <div className="flex items-center justify-center min-h-screen px-4">
+      <div className="panel max-w-xl w-full">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-2xl font-bold">Shithead</h1>
+            <p className="text-sm muted">A small online card game to play with friends</p>
           </div>
         </div>
-      )}
+
+        {/* Username input */}
+        {!user.username && (
+          <div className="space-y-3">
+            <label className="text-sm muted">Choose a display name</label>
+            <input
+              type="text"
+              placeholder="Enter your username"
+              value={nameInput}
+              onChange={(e) => setNameInput(e.target.value)}
+              className="w-full p-3 rounded bg-white/5 border border-white/5"
+            />
+
+            <div className="flex justify-end">
+              <button onClick={handleSetName} className="btn-primary">Save Username</button>
+            </div>
+          </div>
+        )}
+
+        {/* Show if username is set */}
+        {user.username && (
+          <div className="mt-3 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-lg">Hello, <strong>{user.username}</strong></div>
+                <div className="text-xs muted">ID: {user.playerId}</div>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={handleCreateGame} className="btn-primary">Create Game</button>
+              </div>
+            </div>
+
+            <div className="flex gap-2 items-center">
+              <input
+                type="text"
+                placeholder="Enter game ID"
+                value={joinId}
+                onChange={(e) => setJoinId(e.target.value)}
+                className="flex-1 p-2 rounded bg-white/5 border border-white/5"
+              />
+              <button onClick={handleJoinGame} className="btn-ghost">Join Game</button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

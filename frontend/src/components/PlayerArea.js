@@ -1,6 +1,6 @@
 import PlayerHand from "./PlayerHand";
 
-export default function PlayerArea({ player, isSelf = false, position = "bottom" }) {
+export default function PlayerArea({ player, isSelf = false, position = "bottom", onPlayCard, onPlayCards }) {
     // Rotation for left/right players
     let rotation = 0;
     if (position === "left") rotation = 90;
@@ -18,13 +18,13 @@ export default function PlayerArea({ player, isSelf = false, position = "bottom"
     return (
         <div className={`flex flex-col items-center justify-center ${paddingMap[position]}`}>
             {/* Name */}
-            <h2 className="text-white text-sm sm:text-base md:text-lg mb-1 truncate max-w-[6rem] sm:max-w-[8rem] md:max-w-[10rem] text-center">
+            <h2 className="text-white text-sm sm:text-base md:text-lg mb-1 truncate max-w-24 sm:max-w-32 md:max-w-40 text-center">
                 {player?.name || "Unknown"}
             </h2>
 
             {/* Rotated hand */}
             <div className={`transform origin-center`} style={{ transform: `rotate(${rotation}deg)` }}>
-                <PlayerHand cards={player?.hand || []} isSelf={isSelf} />
+                <PlayerHand cards={player?.hand || []} isSelf={isSelf} onPlayCard={isSelf ? onPlayCard : undefined} onPlayCards={isSelf ? onPlayCards : undefined} />
             </div>
         </div>
     );

@@ -39,16 +39,36 @@ export default function GamePage() {
                 </ul>
             </div>
 
-            <button
-                className="mt-4 px-4 py-2 bg-blue-500 rounded hover:bg-blue-600"
-                onClick={() =>
-                    sendAction
-                        ? sendAction("join", { playerId, gameId: "some-existing-id", name: "Nate" })
-                        : sendMessage({ action: "join", playerId, gameId: "some-existing-id", name: "Nate" })
-                }
-            >
-                Join Game
-            </button>
+            <div className="mt-4 space-x-2">
+                <button
+                    className="px-4 py-2 bg-blue-500 rounded hover:bg-blue-600"
+                    onClick={() =>
+                        sendAction
+                            ? sendAction("join", { playerId, gameId: "some-existing-id", name: "Nate" })
+                            : sendMessage({ action: "join", playerId, gameId: "some-existing-id", name: "Nate" })
+                    }
+                >
+                    Join Game
+                </button>
+
+                <button
+                    className="px-4 py-2 bg-green-500 rounded hover:bg-green-600"
+                    onClick={() => {
+                        // Quick play the first card in messages' private hand if available (demo)
+                        const last = messages[messages.length - 1];
+                        const payload = last?.payload || last;
+                        const me = payload?.players?.find((p) => p.playerId === playerId || p.id === playerId);
+                        const myHand = me?.hand || [];
+                        if (myHand.length > 0) {
+                            const card = myHand[0];
+                            if (sendAction) sendAction("play", { playerId, gameId, cardIds: [card.id] });
+                            else sendMessage({ action: "play", playerId, gameId, cardIds: [card.id] });
+                        } else alert("No card available to play (demo).");
+                    }}
+                >
+                    Play First Card (demo)
+                </button>
+            </div>
         </div>
     );
 }

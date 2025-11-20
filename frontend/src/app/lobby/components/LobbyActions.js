@@ -29,33 +29,16 @@ export default function LobbyActions({ isHost, players, sendMessage, sendAction,
     };
 
     return (
-        <div className="w-full max-w-md flex flex-col space-y-2">
-            <button
-                onClick={handleJoin}
-                className="bg-green-500 text-white py-2 rounded hover:bg-green-600"
-            >
-                Join Lobby
-            </button>
+        <div className="w-full flex flex-col space-y-3">
+            <button onClick={handleJoin} className="btn-primary">Join Lobby</button>
 
             {isHost && (
-                <button
-                    onClick={handleStart}
-                    disabled={!canStart}
-                    className={`py-2 rounded ${canStart
-                            ? "bg-purple-500 text-white hover:bg-purple-600"
-                            : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                        }`}
-                >
+                <button onClick={handleStart} disabled={!canStart} className={`py-2 rounded ${canStart ? 'btn-primary' : 'bg-gray-600 text-gray-300 cursor-not-allowed'}`}>
                     Start Game
                 </button>
             )}
 
-            <button
-                onClick={handleReady}
-                className="bg-yellow-400 text-white py-2 rounded hover:bg-yellow-500"
-            >
-                Ready
-            </button>
+            <button onClick={handleReady} className="btn-ghost">Ready</button>
         </div>
     );
 }

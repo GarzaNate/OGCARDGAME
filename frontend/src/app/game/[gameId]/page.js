@@ -4,6 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useUser } from "@/context/UserContext";
 import useGameWebSocket from "@/hooks/useGameWebSocket";
 import GameBoard from "@/components/GameBoard";
+import ConfirmPlayModal from '@/components/ConfirmPlayModal';
 
 export default function GameRoutePage() {
     const params = useParams();
@@ -35,6 +36,12 @@ export default function GameRoutePage() {
     const [drawCount, setDrawCount] = useState(0);
     const [pile, setPile] = useState([]);
 
+    // Confirmation modal & optimistic UI state
+    const [confirmOpen, setConfirmOpen] = useState(false);
+    const [confirmCards, setConfirmCards] = useState([]);
+    const [pendingPlays, setPendingPlays] = useState([]); // { ids:[], backupHand:[] }
+    const pendingCardIdsRef = useRef(null);
+
     // auto-join when connected
     const hasJoinedRef = useRef(false);
     useEffect(() => {
@@ -44,11 +51,30 @@ export default function GameRoutePage() {
         }
     }, [connected, gameId, playerId, playerName, sendAction]);
 
-    // parse incoming messages for a simple gameState
+    // parse incoming messages for a simple gameState and errors
     useEffect(() => {
         if (!messages || messages.length === 0) return;
-        const last = [...messages].reverse().find(Boolean);
+        const last = messages[messages.length - 1];
         if (!last) return;
+
+        // Handle error messages (restore optimistic plays if any)
+        if (last.error) {
+            // restore the most recent pending play if present
+            setPendingPlays((pending) => {
+                if (pending.length === 0) return pending;
+                const latest = pending[pending.length - 1];
+                setPlayers((prev) => {
+                    return prev.map((p) => {
+                        if (p.playerId === playerId || p.id === playerId) {
+                            return { ...p, hand: latest.backupHand };
+                        }
+                        return p;
+                    });
+                });
+                return pending.slice(0, -1);
+            });
+            return;
+        }
 
         // If backend sends a `type` field, prefer structured messages
         if (last.type === "gameState" || last.players) {
@@ -56,6 +82,9 @@ export default function GameRoutePage() {
             if (state.players) setPlayers(state.players);
             if (state.pile) setPile(state.pile);
             if (typeof state.drawCount !== "undefined") setDrawCount(state.drawCount);
+
+            // server responded with authoritative state: clear pending plays
+            setPendingPlays([]);
         }
     }, [messages]);
 
@@ -79,6 +108,60 @@ export default function GameRoutePage() {
                 drawPileCount={drawCount}
                 discardPileCards={pile}
                 onDraw={() => sendAction("draw", { gameId, playerId })}
+                onPlayCard={(card) => {
+                    // send a single-card play; server also supports cardIds for multi-play
+                    if (!card || !card.id) return;
+                    sendAction("play", { gameId, playerId, cardIds: [card.id] });
+                }}
+                onPlayCards={(cardIds) => {
+                    if (!Array.isArray(cardIds) || cardIds.length === 0) return;
+
+                    // Build card objects for confirmation display
+                    const me = players.find((p) => p.playerId === playerId || p.id === playerId) || {};
+                    const myHand = me.hand || [];
+                    const cardsToPlay = cardIds.map((id) => myHand.find((c) => c.id === id)).filter(Boolean);
+
+                    // open confirmation modal
+                    setConfirmCards(cardsToPlay);
+                    setConfirmOpen(true);
+                    // stash selected ids in a ref until confirmed
+                    pendingCardIdsRef.current = cardIds;
+                }}
+            />
+
+            <ConfirmPlayModal
+                open={confirmOpen}
+                cards={confirmCards}
+                onCancel={() => {
+                    setConfirmOpen(false);
+                    setConfirmCards([]);
+                    pendingCardIdsRef.current = null;
+                }}
+                onConfirm={() => {
+                    setConfirmOpen(false);
+                    const cardIds = pendingCardIdsRef.current || [];
+                    if (!cardIds.length) return;
+
+                    // Optimistic update: remove cards from local player's hand and save backup
+                    setPlayers((prev) => {
+                        return prev.map((p) => {
+                            if (p.playerId === playerId || p.id === playerId) {
+                                const backupHand = p.hand ? [...p.hand] : [];
+                                const newHand = (p.hand || []).filter((c) => !cardIds.includes(c.id));
+                                // push pending play with backup
+                                setPendingPlays((old) => [...old, { ids: cardIds, backupHand }]);
+                                return { ...p, hand: newHand };
+                            }
+                            return p;
+                        });
+                    });
+
+                    // send play action to server
+                    sendAction("play", { gameId, playerId, cardIds });
+                    // clear local temp
+                    pendingCardIdsRef.current = null;
+                    setConfirmCards([]);
+                }}
             />
         </div>
     );

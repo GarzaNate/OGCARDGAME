@@ -7,7 +7,7 @@ export default function Pile({ type = "draw", cards = [], remaining = 0, onClick
 
     return (
         <div
-            className="relative w-[6rem] h-[9rem] sm:w-[8rem] sm:h-[12rem] md:w-[10rem] md:h-[15rem] bg-green-800 rounded-2xl border-2 border-green-600 flex items-center justify-center cursor-pointer hover:scale-105 transition-transform"
+            className="relative w-24 h-36 sm:w-32 sm:h-48 md:w-40 md:h-60 bg-green-800 rounded-2xl border-2 border-green-600 flex items-center justify-center cursor-pointer hover:scale-105 transition-transform"
             onClick={onClick}
         >
             {isDrawPile ? (
